@@ -25,4 +25,4 @@ jobs:
           pip install -r requirements.txt
       - name: Test API endpoints
         run: |          
-          pytest tests/test_weather.py
+          pytest tests/test_elevator.py
