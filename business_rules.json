@@ -1,0 +1,8 @@
+{
+    "weight_floot_0": 0.5,
+    "weight_young": 0.7,
+    "old_people_limit": 60,
+    "weight_floor": 0.5,
+    "weight_people": 0.3,
+    "weight_age": 0.2
+}

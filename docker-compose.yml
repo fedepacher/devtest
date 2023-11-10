@@ -1,0 +1,12 @@
+services:
+  database:
+    image: postgres:latest
+    ports:
+      - 5432:5432
+    restart: always
+    environment:
+      POSTGRES_USER: citric
+      POSTGRES_PASSWORD: citric
+      POSTGRES_DB: test1
+    volumes:
+      - ./data:/var/lib/postgresql/data
