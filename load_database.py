@@ -16,6 +16,7 @@ MIN_AVG_AGE_X_FLOOR = 0
 MAX_AVG_AGE_X_FLOOR = 0
 
 # Business rules
+WEIGHT_GARAGE_1 = 0.0 # weight for garage floor, 0 if no garage
 WEIGHT_FLOOR_0 = 0.0 # weight for ground floor for next floor
 OLD_PEOPLE_LIMIT = 0
 WEIGHT_YOUNG = 0.0
@@ -76,6 +77,7 @@ def load_business_rules():
         ValueError: if value greater that 1.
         ValueError: if value greater that 1.
     """
+    global WEIGHT_GARAGE_1
     global WEIGHT_FLOOR_0
     global OLD_PEOPLE_LIMIT
     global WEIGHT_YOUNG
@@ -87,6 +89,7 @@ def load_business_rules():
             data = json.load(file)
     except FileNotFoundError as e:
         print(f"FileNotFoundError: {e}")
+    WEIGHT_GARAGE_1 = data['weight_garage_1']
     WEIGHT_FLOOR_0 = data['weight_floot_0']
     WEIGHT_YOUNG = data['weight_young']
     OLD_PEOPLE_LIMIT = data['old_people_limit']
@@ -94,8 +97,9 @@ def load_business_rules():
     WEIGHT_PEOPLE = data['weight_people']
     WEIGHT_AGE = data['weight_age']
 
-    if WEIGHT_FLOOR_0 > 1:
-        raise ValueError("weight_floot_0 value in JSON file must be lower or equal than 1")
+    if WEIGHT_GARAGE_1 + WEIGHT_FLOOR_0 > 1:
+        raise ValueError("'weight_garage_1 + weight_floot_0' value in JSON file must be lower or "\
+                         "equal than 1")
     if WEIGHT_YOUNG > 1:
         raise ValueError("weight_young value in JSON file must be lower or equal than 1")
     if WEIGHT_FLOOR + WEIGHT_PEOPLE + WEIGHT_AGE > 1:
@@ -113,16 +117,21 @@ def generate_weight_age_list():
     # count amount of older
     count = len([i for i in avg_age_x_floor_list if i >= OLD_PEOPLE_LIMIT])
     # list with weight per age, initialized all floor with same weight
-    age_weight_list = [1 / (len(avg_age_x_floor_list) - 1)] * len(avg_age_x_floor_list)
+    extra_floor = 1
+    if WEIGHT_GARAGE_1 > 0:
+        extra_floor += 1
+    age_weight_list = [1 / (len(avg_age_x_floor_list) - extra_floor)] * len(avg_age_x_floor_list)
     age_weight_list[0] = 0
+    if WEIGHT_GARAGE_1 > 0:
+        age_weight_list[1] = 0
 
     # old factor to substract older position in list per floor
     factor_old = (1 - WEIGHT_YOUNG) / count
     # young factor to add younger position in list
-    factor_young = WEIGHT_YOUNG / ((len(avg_age_x_floor_list) - 1) - count)
+    factor_young = WEIGHT_YOUNG / ((len(avg_age_x_floor_list) - extra_floor) - count)
 
     # create age weight list
-    for i in range(1, TOTAL_FLOOR + 1):
+    for i in range(extra_floor, TOTAL_FLOOR + extra_floor):
         if avg_age_x_floor_list[i] >= OLD_PEOPLE_LIMIT:
             age_weight_list[i] = age_weight_list[i] * (1 - factor_old)
         else:
@@ -134,10 +143,15 @@ def generate_weight_age_list():
 def generate_weight_floor_list():
     """Generate a weight list for each floor. Floor 0 more likely to go, set in business rules. 
     Other floors contain the rest of the porcentage. The sum of all elements equal 1"""
-    weight_x_floor = round(((1 - WEIGHT_FLOOR_0) / (TOTAL_FLOOR)), 3)
-    weight_floor_0 = 1 - weight_x_floor * (TOTAL_FLOOR)
-    weights = [weight_x_floor] * (TOTAL_FLOOR + 1)
-    weights[0] = weight_floor_0
+    weight_x_floor = round(((1 - (WEIGHT_FLOOR_0 + WEIGHT_GARAGE_1)) / (TOTAL_FLOOR)), 3)
+    # weight_floor_0 = 1 - weight_x_floor * (TOTAL_FLOOR)
+    extra_floor = 1
+    if WEIGHT_GARAGE_1 > 0:
+        extra_floor += 1
+    weights = [weight_x_floor] * (TOTAL_FLOOR + extra_floor)
+    weights[0] = WEIGHT_FLOOR_0
+    if WEIGHT_GARAGE_1 > 0:
+        weights[1] = WEIGHT_GARAGE_1
     return weights
 
 
@@ -159,8 +173,11 @@ def generate_next_floor_list(dataset_lenght: int, weights_list: list):
     Returns:
         list: _description_
     """
-    # 10 floor + 1 ground floor = list of 11 floor
-    floor_list = [np.random.choice(a=np.arange(0, TOTAL_FLOOR + 1), p=weights_list)
+    # 10 floor + 1 ground floor + 1 garage= list of 12 floor if WEIGHT_GARAGE_1 > 0
+    extra_floor = 1
+    if WEIGHT_GARAGE_1 > 0:
+        extra_floor += 1
+    floor_list = [np.random.choice(a=np.arange(0, TOTAL_FLOOR + extra_floor), p=weights_list)
                   for i in range(dataset_lenght)]
 
     return floor_list
@@ -192,20 +209,23 @@ def generate_demanding_floor_list(dataset_lenght: int, weight_floor_list: list,
                                                                           weigth_avg_people_x_floor,
                                                                           weigth_avg_age_x_floor)):
         weight_demanding_floor.append((weight_floor * WEIGHT_FLOOR +
-                                        weight_avg_people * WEIGHT_PEOPLE +
-                                        weigth_avg_age * WEIGHT_AGE))
+                                       weight_avg_people * WEIGHT_PEOPLE +
+                                       weigth_avg_age * WEIGHT_AGE))
 
     # correct weights because choice function need the sum of weight = 1 and due to decimal sometime
     # it does not happend. Sum or substract the same amount for each floor.
     aux_var = 1 - sum(weight_demanding_floor)
+    extra_floor = 1
+    if WEIGHT_GARAGE_1 > 0:
+        extra_floor += 1
     if aux_var != 0:
-        for i in range(1, len(weight_demanding_floor)):
+        for i in range(extra_floor, len(weight_demanding_floor)):
             weight_demanding_floor[i] += aux_var / TOTAL_FLOOR
 
     demand_list = []
     for i in range(dataset_lenght):
         while True:
-            demand_floor = np.random.choice(a=np.arange(0, TOTAL_FLOOR + 1),
+            demand_floor = np.random.choice(a=np.arange(0, TOTAL_FLOOR + extra_floor),
                                             p=weight_demanding_floor)
             if demand_floor != next_floor_list[i]:
                 demand_list.append(demand_floor)
@@ -254,6 +274,10 @@ if __name__ == '__main__':
     # Insert ground floor
     avg_people_x_floor_list = np.insert(avg_people_x_floor_list, 0, 0, axis=0)
     avg_age_x_floor_list = np.insert(avg_age_x_floor_list, 0, 0, axis=0)
+    # Insert garage floor
+    if WEIGHT_GARAGE_1 > 0:
+        avg_people_x_floor_list = np.insert(avg_people_x_floor_list, 0, 0, axis=0)
+        avg_age_x_floor_list = np.insert(avg_age_x_floor_list, 0, 0, axis=0)
 
     print("People per floor list")
     print(avg_people_x_floor_list)

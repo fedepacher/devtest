@@ -1,5 +1,6 @@
 {
-    "weight_floot_0": 0.5,
+    "weight_garage_1": 0.3,
+    "weight_floot_0": 0.3,
     "weight_young": 0.7,
     "old_people_limit": 60,
     "weight_floor": 0.5,
