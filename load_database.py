@@ -120,7 +120,7 @@ def generate_weight_age_list():
     extra_floor = 1
     if WEIGHT_GARAGE_1 > 0:
         extra_floor += 1
-    age_weight_list = [1 / (len(avg_age_x_floor_list) - extra_floor)] * len(avg_age_x_floor_list)
+    age_weight_list = [1 / (TOTAL_FLOOR)] * len(avg_age_x_floor_list)
     age_weight_list[0] = 0
     if WEIGHT_GARAGE_1 > 0:
         age_weight_list[1] = 0
@@ -128,7 +128,7 @@ def generate_weight_age_list():
     # old factor to substract older position in list per floor
     factor_old = (1 - WEIGHT_YOUNG) / count
     # young factor to add younger position in list
-    factor_young = WEIGHT_YOUNG / ((len(avg_age_x_floor_list) - extra_floor) - count)
+    factor_young = WEIGHT_YOUNG / (TOTAL_FLOOR - count)
 
     # create age weight list
     for i in range(extra_floor, TOTAL_FLOOR + extra_floor):
@@ -304,5 +304,5 @@ if __name__ == '__main__':
                                                       weigth_avg_age_x_flor,
                                                       next_floor_list)
     print(demand_floor_list)
-    datetime_list = generate_datetime_list()    
+    datetime_list = generate_datetime_list() 
     save_data(next_floor_list, demand_floor_list, datetime_list)

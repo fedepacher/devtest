@@ -146,7 +146,13 @@ weight_floot_0 = 0.5<br>
 
 <p align=center><img src=_src/assets/weight_floor.png><p>
 
->Note: This list will be used to generate a random list of floor that people go based on this list of probabilities. It will be used a Numpy function called [Choice](https://numpy.org/doc/stable/reference/random/generated/numpy.random.choice.html).
+>Note 1: This list will be used to generate a random list of floor that people go based on this list of probabilities. It will be used a Numpy function called [Choice](https://numpy.org/doc/stable/reference/random/generated/numpy.random.choice.html).
+
+### Step 4.1
+
+It has added the option of a garage floor.To represent this floor a new business rule has added with the name **weight_garage_1**. If this value is equal to 0 means that there isn´t a garage floor, otherwise, if this value is greater than 0 there is a garage and the array is as follow.
+
+<p align=center><img src=_src/assets/garage.png><p>
 
 ## Step 5
 
@@ -163,7 +169,7 @@ For this list will be used the following business rules:
 **factor_old** = (1 - weight_young) / (Amount of floor that average people age exceed an age limit (old_people_limit))<br>
 **factor_young** = weight_young / (Amount of floor that average people age **does not** exceed an age limit)
 
-- **old_people_limit**: People older than this limit are concidered old. The elevator use frequency goes down.
+- **old_people_limit**: People older than this limit is considered old. The elevator use frequency decrease
 
 For this example:<br>
 weight_young: 0.7<br>
@@ -190,7 +196,7 @@ Each factor of this list will be done as follow:
 
 Example floor 0:<br>
 ```
-weight_demanding_floor[0] = weight_floor[0] * WEIGHT_FLOOR + weight_avg_people[0] * WEIGHT_PEOPLE + weigth_avg_age[0] * WEIGHT_AGE <br>
+weight_demanding_floor[0] = weight_floor[0] * WEIGHT_FLOOR + weight_avg_people[0] * WEIGHT_PEOPLE + weigth_avg_age[0] * WEIGHT_AGE
 ```
 
 Where:<br>
